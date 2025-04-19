@@ -2,13 +2,13 @@ package route
 
 import (
 	"database/sql"
-	"fiber_rest_api/controller"
+	"fiber_rest_api/service"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func ProductRoute(api fiber.Router, db *sql.DB) {
-	productController := controller.NewProductController(db)
+	productController := service.NewProductService(db)
 	productRoute := api.Group("/products")
 
 	productRoute.Get("/:id", productController.GetProduct)

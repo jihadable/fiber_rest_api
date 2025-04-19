@@ -1,4 +1,4 @@
-package controller
+package service
 
 import (
 	"context"
@@ -10,15 +10,23 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type productController struct {
+type ProductService interface {
+	GetProduct(ctx *fiber.Ctx) error
+	GetProducts(ctx *fiber.Ctx) error
+	StoreProduct(ctx *fiber.Ctx) error
+	UpdateProduct(ctx *fiber.Ctx) error
+	DeleteProduct(ctx *fiber.Ctx) error
+}
+
+type productServiceImpl struct {
 	Repo repo.ProductRepo
 }
 
-func NewProductController(db *sql.DB) *productController {
-	return &productController{Repo: repo.NewProductRepo(db)}
+func NewProductService(db *sql.DB) ProductService {
+	return &productServiceImpl{Repo: repo.NewProductRepo(db)}
 }
 
-func (controller *productController) GetProduct(ctx *fiber.Ctx) error {
+func (service *productServiceImpl) GetProduct(ctx *fiber.Ctx) error {
 	paramId := ctx.Params("id")
 	productId, err := strconv.Atoi(paramId)
 	if err != nil {
@@ -28,7 +36,7 @@ func (controller *productController) GetProduct(ctx *fiber.Ctx) error {
 		})
 	}
 
-	product, err := controller.Repo.FindById(context.Background(), productId)
+	product, err := service.Repo.FindById(context.Background(), productId)
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":  "error",
@@ -43,8 +51,8 @@ func (controller *productController) GetProduct(ctx *fiber.Ctx) error {
 	})
 }
 
-func (controller *productController) GetProducts(ctx *fiber.Ctx) error {
-	products, err := controller.Repo.FindAll(context.Background())
+func (service *productServiceImpl) GetProducts(ctx *fiber.Ctx) error {
+	products, err := service.Repo.FindAll(context.Background())
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":  "error",
@@ -59,7 +67,7 @@ func (controller *productController) GetProducts(ctx *fiber.Ctx) error {
 	})
 }
 
-func (controller *productController) StoreProduct(ctx *fiber.Ctx) error {
+func (service *productServiceImpl) StoreProduct(ctx *fiber.Ctx) error {
 	product := model.Product{}
 	if err := ctx.BodyParser(&product); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -68,7 +76,7 @@ func (controller *productController) StoreProduct(ctx *fiber.Ctx) error {
 		})
 	}
 
-	newProduct, err := controller.Repo.Save(context.Background(), product)
+	newProduct, err := service.Repo.Save(context.Background(), product)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
@@ -83,7 +91,7 @@ func (controller *productController) StoreProduct(ctx *fiber.Ctx) error {
 	})
 }
 
-func (controller *productController) UpdateProduct(ctx *fiber.Ctx) error {
+func (service *productServiceImpl) UpdateProduct(ctx *fiber.Ctx) error {
 	paramId := ctx.Params("id")
 	productId, err := strconv.Atoi(paramId)
 	if err != nil {
@@ -103,7 +111,7 @@ func (controller *productController) UpdateProduct(ctx *fiber.Ctx) error {
 
 	product.Id = productId
 
-	updatedProduct, err := controller.Repo.Update(context.Background(), product)
+	updatedProduct, err := service.Repo.Update(context.Background(), product)
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":  "error",
@@ -118,7 +126,7 @@ func (controller *productController) UpdateProduct(ctx *fiber.Ctx) error {
 	})
 }
 
-func (controller *productController) DeleteProduct(ctx *fiber.Ctx) error {
+func (service *productServiceImpl) DeleteProduct(ctx *fiber.Ctx) error {
 	paramId := ctx.Params("id")
 	productId, err := strconv.Atoi(paramId)
 	if err != nil {
@@ -128,7 +136,7 @@ func (controller *productController) DeleteProduct(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err = controller.Repo.Delete(context.Background(), productId); err != nil {
+	if err = service.Repo.Delete(context.Background(), productId); err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Product not found",
