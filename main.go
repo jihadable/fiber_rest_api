@@ -5,9 +5,21 @@ import (
 	"fiber_rest_api/route"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/spf13/viper"
 )
 
 func main() {
+	env := viper.New()
+	env.SetConfigFile(".env")
+	env.AddConfigPath("../")
+
+	err := env.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	port := env.GetString("PORT")
+
 	app := fiber.New()
 	db := database.GetConnection()
 
@@ -15,5 +27,5 @@ func main() {
 
 	route.ProductRoute(api, db)
 
-	app.Listen("localhost:8000")
+	app.Listen("localhost:" + port)
 }
